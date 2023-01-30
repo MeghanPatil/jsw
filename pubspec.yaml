@@ -37,10 +37,18 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   fluttertoast: ^8.1.2
-  responsive_navigation_bar: ^3.2.6
   extended_image: ^6.3.4
   file_picker: ^5.2.5
   image_picker: ^0.8.6
+  adaptive_navigation: ^0.0.7
+  qr_code_scanner: ^1.0.1
+  sqflite: ^2.2.3
+  path: ^1.8.2
+  path_provider: ^2.0.11
+  http: ^0.13.5
+  shared_preferences: ^2.0.17
+  connectivity_plus: ^3.0.2
+  provider: ^6.0.5
 
 dev_dependencies:
   flutter_test:

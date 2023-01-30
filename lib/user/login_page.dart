@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import 'home_page.dart';
+import 'package:jsw/service/api-urls.dart';
+import '../adaptive/nav_page.dart';
+import '../common-methods.dart';
+import '../service/api-services.dart';
+import '../service/preferences.dart';
+import 'login_model.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -10,7 +15,18 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool hideText = true;
-bool showText = false;
+  bool showText = false;
+  final _formKey = GlobalKey<FormState>();
+
+
+  var empIdController = TextEditingController();
+  var passwordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +34,8 @@ bool showText = false;
       backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Form(
+        child: ApiUrls.loaderOnBtn == true? const Center(child: CircularProgressIndicator()) :Form(
+          key: _formKey,
           child: SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -44,8 +61,15 @@ bool showText = false;
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: TextFormField(
+                          controller: empIdController,
+                          validator: (value){
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter Employee Id';
+                            }
+                            return null;
+                          },
                           decoration: const InputDecoration(
-                              contentPadding: EdgeInsets.all(5),
+                              contentPadding: EdgeInsets.all(10),
                               label: Text("Employee ID"),
                               labelStyle: TextStyle(color: Colors.black),
                               hintText: "Contact No. / Employee ID",
@@ -58,9 +82,16 @@ bool showText = false;
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: TextFormField(
+                          controller: passwordController,
                           obscureText: hideText,
+                          validator: (value){
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter password';
+                            }
+                            return null;
+                          },
                           decoration: InputDecoration(
-                              contentPadding: const EdgeInsets.all(5),
+                              contentPadding: const EdgeInsets.all(10),
                               label: const Text("Password"),
                               labelStyle: const TextStyle(color: Colors.black),
                               border: const OutlineInputBorder(
@@ -83,7 +114,12 @@ bool showText = false;
                     onPressed: (){}, child: const Text("Forgot Password?")),
                 ElevatedButton(
                   onPressed: (){
-                    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)=> const HomePage()));
+                    if (_formKey.currentState!.validate()) {
+                      setState(() {
+                        ApiUrls.loaderOnBtn = true;
+                      });
+                      login();
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
@@ -139,4 +175,39 @@ bool showText = false;
       hideText = !hideText;
     });
   }
+
+  Future<void> login() async {
+    LoginRequestModel requestModel = LoginRequestModel(
+        employeeid: empIdController.text,
+        password: passwordController.text);
+    print('login req :: ${requestModel.toJson()}');
+    await ApiService.postMethod(requestModel.toJson(), ApiUrls.loginUrl)
+        .then((value) async {
+      print('login res :: ${value}');
+      var resData = loginModelFromJson(value);
+      if (resData.status == 1) {
+        setState(() {
+          ApiUrls.loaderOnBtn = false;
+        });
+        print('on save token :: ${resData.data?.token}');
+        await Preferences().saveUserDetails(resData.data!).whenComplete(() async {
+          final String? prefToken = await Preferences().getProfileToken();
+          print("prefToken save $prefToken");
+          ApiUrls.profileToken = prefToken!;
+          final String? userId = await Preferences().getUserId();
+          print("userId save $userId");
+          ApiUrls.userId = userId!;
+          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)=> const AdaptiveNavigationPage()));
+        });
+      } else {
+        setState(() {
+          ApiUrls.loaderOnBtn = false;
+        });
+        showToast(resData.message,"");
+      }
+    });
+  }
+
+
+
 }

@@ -1,8 +1,9 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:jsw/user/drawer/profile_page.dart';
+import 'package:jsw/drawer/profile_page.dart';
 import 'package:jsw/user/login_page.dart';
+import '../../service/preferences.dart';
+import 'change_password.dart';
 
 class DrawerWidget extends StatefulWidget {
   const DrawerWidget({Key? key}) : super(key: key);
@@ -51,14 +52,24 @@ class _DrawerWidgetState extends State<DrawerWidget> {
             leading: const Icon(Icons.password),
             title: const Text(' Change password '),
             onTap: () {
-              //Navigator.of(context).push(MaterialPageRoute(builder: (context)=> const ProfilePage()));
+              Navigator.of(context).push(MaterialPageRoute(builder: (context)=> const ChangePassword()));
             },
           ),
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('LogOut'),
-            onTap: () {
-              Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)=> const LoginPage()));
+            onTap: () async {
+              await Preferences().removeUser().then((value) {
+                if (value == true) {
+                  Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context)=> const LoginPage()));
+                  //Navigator.of(context).popUntil(ModalRoute.withName('/login'));
+                  /*Navigator.of(context).popUntil((route) {
+                    print("route.isFirst ${route.isFirst}");
+                    return route.isFirst;
+                  });*/
+                }
+              });
+
             },
           ),
         ],
